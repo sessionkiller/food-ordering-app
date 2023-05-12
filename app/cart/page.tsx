@@ -3,10 +3,112 @@ import { RootState } from "@/redux/store";
 import styles from "../../styles/Cart.module.css";
 import Image from "next/image";
 import { useSelector, useDispatch } from 'react-redux'
+import { useEffect, useState } from "react";
+import {
+    PayPalScriptProvider,
+    PayPalButtons,
+    usePayPalScriptReducer
+} from "@paypal/react-paypal-js";
+import { IOrder } from "@/models/Order";
+import { reset } from "@/redux/cartSlice";
+
+const ButtonWrapper = ({ currency, amount, style, showSpinner, createOrder } : {
+  currency : string,
+  amount: number,
+  style: any,
+  showSpinner : boolean,
+  createOrder: (data: Partial<IOrder>) => void
+}) => {
+  // usePayPalScriptReducer can be use only inside children of PayPalScriptProviders
+  // This is the main reason to wrap the PayPalButtons in a new component
+  const [{ options, isPending }, dispatch] = usePayPalScriptReducer();
+
+  useEffect(() => {
+      dispatch({
+          type: "resetOptions",
+          value: {
+              ...options,
+              currency: currency,
+          },
+      });
+  }, [currency, showSpinner]);
+
+
+  return (<>
+          { (showSpinner && isPending) && <div className="spinner" /> }
+          <PayPalButtons
+              style={style}
+              disabled={false}
+              forceReRender={[amount, currency, style]}
+              fundingSource={undefined}
+              createOrder={(data, actions) => {
+                  return actions.order
+                      .create({
+                          purchase_units: [
+                              {
+                                  amount: {
+                                      currency_code: currency,
+                                      value: ''+amount,
+                                  },
+                              },
+                          ],
+                      })
+                      .then((orderId) => {
+                          // Your code here after create the order
+                          return orderId;
+                      });
+              }}
+              onApprove={function (data, actions) : any {
+                  return actions.order?.capture().then(function (details) {
+                      // Your code here after capture the order
+                      const shipping = details.purchase_units[0].shipping;
+                      createOrder({
+                        customer: shipping?.name?.full_name,
+                        address: shipping?.address?.address_line_1,
+                        total: amount,
+                        method: 1
+                      })
+                      
+                  });
+              }}
+          />
+      </>
+  );
+}
 
 const Cart = () => {
+
+  const [open, setOpen] = useState(false);
   const products = useSelector((state : RootState) => state.cart.products);
   const total = useSelector((state : RootState) => state.cart.total);
+  const dispatch = useDispatch();
+
+  // This values are the props in the UI
+  const amount = total;
+  const currency = "USD";
+  const style = {"layout":"vertical"};
+
+  const createOrder = async (data : any) => {
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if(response.ok){
+        const result = await response.json();
+        dispatch(reset())
+        window.location.href = `/orders/${result._id}`;
+      }
+    
+    } catch (error) {
+      console.log(error);
+      
+    }
+  }
 
   return (
     <div className={styles.container}>
@@ -98,7 +200,31 @@ const Cart = () => {
           <div className={styles.totalText}>
             <b className={styles.totalTextTitle}>Total:</b>${total}
           </div>
-          <button className={styles.button}>CHECKOUT NOW!</button>
+
+          {open ? (
+            <div className={styles.paymentMethods}>
+              <button className={styles.payButton}>CASH ON DELIVERY</button>
+              <PayPalScriptProvider
+                    options={{
+                        "client-id": process.env.paypal_client_id || 'test',
+                        components: "buttons",
+                        currency: "USD",
+                        "disable-funding": 'credit,card'
+                    }}
+                >
+                <ButtonWrapper
+                    currency={currency}
+                    showSpinner={false}
+                    style={style}
+                    amount={amount}
+                    createOrder={createOrder}
+                />
+              </PayPalScriptProvider>
+            </div>
+          ) : (
+            <button onClick={() => setOpen(true)} className={styles.button}>CHECKOUT NOW!</button>
+          )}
+          
         </div>
       </div>
     </div>

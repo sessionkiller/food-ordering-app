@@ -7,7 +7,10 @@ const nextConfig = {
   webpack(config) {
     config.experiments = { ...config.experiments, topLevelAwait: true }
     return config
-  }
+  },
+  env : {
+    paypal_client_id: process.env.PAYPAL_CLIENT_ID
+}
 }
 
 module.exports = nextConfig

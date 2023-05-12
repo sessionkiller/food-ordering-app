@@ -1,14 +1,18 @@
-import dbConnect from '../../../utils/mongo'
-import Order from '../../../models/Order'
+import dbConnect from '../../../../utils/mongo'
+import Order from '../../../../models/Order'
 import { NextResponse } from 'next/server'
 
-export async function GET(request: Request) {
+export async function GET(request: Request, {
+    params,
+  }: {
+    params: { id: string };
+  }) {
 
     await dbConnect();
-
+    
     try {
-        const orders = await Order.find();
-        return NextResponse.json(orders)
+        const order = await Order.findById(params.id);
+        return NextResponse.json(order)
     } catch (error) {
         return NextResponse.json(error, {
             status: 500
