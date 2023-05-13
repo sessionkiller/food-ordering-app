@@ -2,6 +2,7 @@
 import { RootState } from "@/redux/store";
 import styles from "../../styles/Cart.module.css";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from 'react-redux'
 import { useEffect, useState } from "react";
 import {
@@ -82,6 +83,7 @@ const Cart = () => {
   const products = useSelector((state : RootState) => state.cart.products);
   const total = useSelector((state : RootState) => state.cart.total);
   const dispatch = useDispatch();
+  const router = useRouter();
 
   // This values are the props in the UI
   const amount = total;
@@ -101,7 +103,7 @@ const Cart = () => {
       if(response.ok){
         const result = await response.json();
         dispatch(reset())
-        window.location.href = `/orders/${result._id}`;
+        router.push(`/orders/${result._id}`);
       }
     
     } catch (error) {
