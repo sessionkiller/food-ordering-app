@@ -12,6 +12,7 @@ import {
 } from "@paypal/react-paypal-js";
 import { IOrder } from "@/models/Order";
 import { reset } from "@/redux/cartSlice";
+import OrderDetail from "@/components/OrderDetail";
 
 const ButtonWrapper = ({ currency, amount, style, showSpinner, createOrder } : {
   currency : string,
@@ -80,6 +81,7 @@ const ButtonWrapper = ({ currency, amount, style, showSpinner, createOrder } : {
 const Cart = () => {
 
   const [open, setOpen] = useState(false);
+  const [cash, setCash] = useState(false);
   const products = useSelector((state : RootState) => state.cart.products);
   const total = useSelector((state : RootState) => state.cart.total);
   const dispatch = useDispatch();
@@ -205,7 +207,7 @@ const Cart = () => {
 
           {open ? (
             <div className={styles.paymentMethods}>
-              <button className={styles.payButton}>CASH ON DELIVERY</button>
+              <button className={styles.payButton} onClick={() => setCash(true)}>CASH ON DELIVERY</button>
               <PayPalScriptProvider
                     options={{
                         "client-id": process.env.paypal_client_id || 'test',
@@ -229,6 +231,10 @@ const Cart = () => {
           
         </div>
       </div>
+
+      {cash && (
+        <OrderDetail total={total} createOrder={createOrder} setCash={setCash} />
+      )}
     </div>
   );
 };
