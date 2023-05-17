@@ -1,6 +1,7 @@
 import dbConnect from '../../../utils/mongo'
 import Product from '../../../models/Product'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers';
 
 export async function GET(request: Request) {
 
@@ -17,6 +18,15 @@ export async function GET(request: Request) {
   }
 
 export async function POST(request: Request) {
+
+    const cookieStore = cookies();
+    const token = cookieStore.get('token');
+
+    if(token?.value !== process.env.TOKEN){
+        return NextResponse.json('Not authenticated!', {
+            status: 401
+        })
+    }
 
     await dbConnect()
 

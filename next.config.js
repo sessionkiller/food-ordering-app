@@ -9,8 +9,12 @@ const nextConfig = {
     return config
   },
   env : {
-    paypal_client_id: process.env.PAYPAL_CLIENT_ID
-}
+    paypal_client_id: process.env.PAYPAL_CLIENT_ID,
+    cloudinary_url: process.env.CLOUDINARY_URL
+  },
+  images: {
+    domains: ['res.cloudinary.com']
+  }
 }
 
 module.exports = nextConfig

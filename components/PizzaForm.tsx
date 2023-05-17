@@ -5,12 +5,7 @@ import Image from 'next/image';
 import { IProduct } from '@/models/Product';
 import { useDispatch } from 'react-redux'
 import { addProduct } from '@/redux/cartSlice';
-
-type Extra = {
-    text: string
-    price: number
-    _id?: string
-}
+import { Extra } from '@/utils/types';
 
 const PizzaForm = ({pizza} : {pizza : IProduct}) => {
 
